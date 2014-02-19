@@ -1,6 +1,7 @@
 require 'digest/md5'
 require 'fileutils'
 require 'pathname'
+require 'active_support/core_ext'
 
 module Sprockets
   module Cache
@@ -24,7 +25,10 @@ module Sprockets
         # Ensure directory exists
         FileUtils.mkdir_p @root.join(key).dirname
 
-        @root.join(key).open('w') { |f| Marshal.dump(value, f)}
+        File.atomic_write(@root.join(key).to_s) do |file|
+          file.write(Marshal.dump(value, file))
+        end
+
         value
       end
     end
