@@ -18,7 +18,7 @@ module Sprockets
       def [](key)
         pathname = @root.join(key)
         if pathname.exist?
-          lock_file(pathname) { pathname.open('rb') { |f| Marshal.load(f) } }
+          lock_file("#{pathname.to_s}.lock") { pathname.open('rb') { |f| Marshal.load(f) } }
         else
           nil
         end
@@ -32,7 +32,7 @@ module Sprockets
         # Ensure directory exists
         FileUtils.mkdir_p @root.join(key).dirname
 
-        lock_file(@root.join(key).to_s) do
+        lock_file("#{@root.join(key).to_s}.lock") do
           File.atomic_write(@root.join(key).to_s) do |file|
             file.write(Marshal.dump(value, file))
           end
