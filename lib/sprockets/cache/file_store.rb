@@ -17,7 +17,11 @@ module Sprockets
       # Lookup value in cache
       def [](key)
         pathname = @root.join(key)
-        pathname.exist? ? pathname.open('rb') { |f| Marshal.load(f) } : nil
+        if pathname.exist?
+          lock_file(pathname) { pathname.open('rb') { |f| Marshal.load(f) } }
+        else
+          nil
+        end
       rescue Exception => e
         puts caller
         raise "ERRRRRRRRRRRRRRRRRRRRRRRRRRRRROR #{e.to_s} #{@root.inspect} #{key} "
@@ -28,11 +32,28 @@ module Sprockets
         # Ensure directory exists
         FileUtils.mkdir_p @root.join(key).dirname
 
-        File.atomic_write(@root.join(key).to_s) do |file|
-          file.write(Marshal.dump(value, file))
+        lock_file(@root.join(key).to_s) do
+          File.atomic_write(@root.join(key).to_s) do |file|
+            file.write(Marshal.dump(value, file))
+          end
         end
 
         value
+      end
+
+      def lock_file(file_name, &block) # :nodoc:
+        if File.exist?(file_name)
+          File.open(file_name, 'r+') do |f|
+            begin
+              f.flock File::LOCK_EX
+              yield
+            ensure
+              f.flock File::LOCK_UN
+            end
+          end
+        else
+          yield
+        end
       end
     end
   end
