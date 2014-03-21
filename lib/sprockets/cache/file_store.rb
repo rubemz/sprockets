@@ -18,6 +18,9 @@ module Sprockets
       def [](key)
         pathname = @root.join(key)
         pathname.exist? ? pathname.open('rb') { |f| Marshal.load(f) } : nil
+      rescue Exception => e
+        puts caller
+        raise "ERRRRRRRRRRRRRRRRRRRRRRRRRRRRROR #{e.to_s}"
       end
 
       # Save value to cache
