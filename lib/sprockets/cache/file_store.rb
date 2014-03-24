@@ -22,7 +22,7 @@ module Sprockets
         else
           nil
         end
-      rescue => e
+      rescue
         nil
       end
 
