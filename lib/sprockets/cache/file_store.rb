@@ -18,13 +18,12 @@ module Sprockets
       def [](key)
         pathname = @root.join(key)
         if pathname.exist?
-          lock_file("#{pathname.to_s}.lock") { pathname.open('rb') { |f| Marshal.load(f) } }
+          lock_file(pathname) { pathname.open('rb') { |f| Marshal.load(f) } }
         else
           nil
         end
-      rescue Exception => e
-        puts caller
-        raise "ERRRRRRRRRRRRRRRRRRRRRRRRRRRRROR #{e.to_s} #{@root.inspect} #{key} "
+      rescue => e
+        nil
       end
 
       # Save value to cache
@@ -32,7 +31,7 @@ module Sprockets
         # Ensure directory exists
         FileUtils.mkdir_p @root.join(key).dirname
 
-        lock_file("#{@root.join(key).to_s}.lock") do
+        lock_file(@root.join(key).to_s) do
           File.atomic_write(@root.join(key).to_s) do |file|
             file.write(Marshal.dump(value, file))
           end
